@@ -11,6 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using TalkToApi.V1.Repositories.Contracts;
+using TalkToApi.V1.Models.DTO;
 
 namespace TalkToApi.V1.Controllers
 {
@@ -88,6 +89,53 @@ namespace TalkToApi.V1.Controllers
                 usuario.Email = usuarioDTO.Email;
 
                 var resultado = _userManager.CreateAsync(usuario, usuarioDTO.Senha).Result;
+
+                if (!resultado.Succeeded)
+                {
+                    List<string> erros = new List<string>();
+                    foreach (var erro in resultado.Errors)
+                    {
+                        erros.Add(erro.Description);
+                    }
+                    return UnprocessableEntity(erros);
+                }
+                else
+                {
+                    return Ok(usuario);
+                }
+
+            }
+            else
+            {
+                return UnprocessableEntity(ModelState);
+            }
+        }
+
+        /*
+         * api/usuario/{id} -> PUT
+         */
+        [HttpPut("{id}")]
+        public ActionResult Atualizar(string id, [FromBody]UsuarioDTO usuarioDTO)
+        {
+            //TODO - Adicionar filtro de validação
+            if(_userManager.GetUserAsync(HttpContext.User).Result.Id != id)
+            {
+                return Forbid();
+            }
+
+            if (ModelState.IsValid)
+            {
+                //TODO - Refatorar para AutoMapper.
+                ApplicationUser usuario = new ApplicationUser();
+                usuario.FullName = usuarioDTO.Nome;
+                usuario.UserName = usuarioDTO.Email;
+                usuario.Email = usuarioDTO.Email;
+                usuario.Slogan = usuarioDTO.Slogan;
+
+                //TODO - Remover no Identity critérios da senha
+                var resultado = _userManager.UpdateAsync(usuario).Result;
+                _userManager.RemovePasswordAsync(usuario);
+                _userManager.AddPasswordAsync(usuario, usuarioDTO.Senha);
 
                 if (!resultado.Succeeded)
                 {

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -19,6 +20,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.IdentityModel.Tokens;
+using MimicAPI.Helpers;
 using Swashbuckle.AspNetCore.Swagger;
 using TalkToApi.Database;
 using TalkToApi.V1.Helpers.Swagger;
@@ -40,6 +42,15 @@ namespace TalkToApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            #region AutoMapper-Configuração
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile(new DTOMapperProfile());
+            });
+            IMapper mapper = config.CreateMapper();
+            services.AddSingleton(mapper);
+            #endregion
+
             services.Configure<ApiBehaviorOptions>(op =>
             {
                 op.SuppressModelStateInvalidFilter = true;
@@ -51,10 +62,10 @@ namespace TalkToApi
                 cfg.UseSqlite("Data Source=Database\\TalkTo.db");
             });
 
-            services.AddMvc(config => {
-                config.ReturnHttpNotAcceptable = true; //Retorna 406 quando o user solicita outro tipo de retorno que não seja o padrão da API
-                config.InputFormatters.Add(new XmlSerializerInputFormatter(config));
-                config.OutputFormatters.Add(new XmlSerializerOutputFormatter());
+            services.AddMvc(cfg => {
+                cfg.ReturnHttpNotAcceptable = true; //Retorna 406 quando o user solicita outro tipo de retorno que não seja o padrão da API
+                cfg.InputFormatters.Add(new XmlSerializerInputFormatter(cfg));
+                cfg.OutputFormatters.Add(new XmlSerializerOutputFormatter());
             })
                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2).AddJsonOptions(
                 options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
