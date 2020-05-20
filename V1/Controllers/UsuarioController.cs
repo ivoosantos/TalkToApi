@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Text;
 using TalkToApi.V1.Repositories.Contracts;
 using TalkToApi.V1.Models.DTO;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TalkToApi.V1.Controllers
 {
@@ -30,6 +31,22 @@ namespace TalkToApi.V1.Controllers
             _signInManager = signInManager;
             _userManager = userManager;
             _tokenRepository = tokenRepository;
+        }
+
+        [Authorize]
+        [HttpGet("")]
+        public ActionResult ObterTodos()
+        {
+            return Ok(_userManager.Users);
+        }
+
+        [HttpGet("{id}")]
+        public ActionResult ObterUsuario(string id)
+        {
+            var usuario = _userManager.FindByIdAsync(id).Result;
+            if (usuario == null)
+                return NotFound();
+            return Ok(usuario);
         }
 
         [HttpPost("login")]
@@ -114,11 +131,13 @@ namespace TalkToApi.V1.Controllers
         /*
          * api/usuario/{id} -> PUT
          */
+        [Authorize]
         [HttpPut("{id}")]
         public ActionResult Atualizar(string id, [FromBody]UsuarioDTO usuarioDTO)
         {
             //TODO - Adicionar filtro de validação
-            if(_userManager.GetUserAsync(HttpContext.User).Result.Id != id)
+            ApplicationUser usuario = _userManager.GetUserAsync(HttpContext.User).Result;
+            if (usuario.Id != id)
             {
                 return Forbid();
             }
@@ -126,7 +145,6 @@ namespace TalkToApi.V1.Controllers
             if (ModelState.IsValid)
             {
                 //TODO - Refatorar para AutoMapper.
-                ApplicationUser usuario = new ApplicationUser();
                 usuario.FullName = usuarioDTO.Nome;
                 usuario.UserName = usuarioDTO.Email;
                 usuario.Email = usuarioDTO.Email;
