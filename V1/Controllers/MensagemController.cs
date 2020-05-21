@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using TalkToApi.V1.Models;
+using TalkToApi.V1.Models.DTO;
 using TalkToApi.V1.Repositories.Contracts;
 
 namespace TalkToApi.V1.Controllers
@@ -16,14 +18,16 @@ namespace TalkToApi.V1.Controllers
     [ApiVersion("1.0")]
     public class MensagemController : ControllerBase
     {
+        private readonly IMapper _mapper;
         private readonly IMensagemRepository _mensagemRepository;
-        public MensagemController(IMensagemRepository mensagemRepository)
+        public MensagemController(IMapper mapper, IMensagemRepository mensagemRepository)
         {
+            _mapper = mapper;
             _mensagemRepository = mensagemRepository;
         }
 
         [Authorize]
-        [HttpGet("{usuarioUmId}/{usuarioDoisId}")]
+        [HttpGet("{usuarioUmId}/{usuarioDoisId}", Name = "Obter")]
         public ActionResult ObterMensagens(string usuarioUmId, string usuarioDoisId)
         {
             if(usuarioUmId == usuarioDoisId)
@@ -31,12 +35,18 @@ namespace TalkToApi.V1.Controllers
                 return UnprocessableEntity();
             }
 
-            return Ok(_mensagemRepository.ObterMensagens(usuarioUmId, usuarioDoisId));
+            var mensagens = _mensagemRepository.ObterMensagens(usuarioUmId, usuarioDoisId);
+
+            var listaMsg = _mapper.Map<List<Mensagem>, List<MensagemDTO>>(mensagens);
+            var lista = new ListaDTO<MensagemDTO>() { Lista = listaMsg };
+            lista.Links.Add(new LinkDTO("_self", Url.Link("Obter", new { usuarioUmId = usuarioUmId, usuarioDoisId = usuarioDoisId }), "GET"));
+
+            return Ok(lista);
 
         }
 
         [Authorize]
-        [HttpPost("")]
+        [HttpPost("", Name = "Cadastrar")]
         public ActionResult Cadastrar([FromBody]Mensagem mensagem)
         {
 
@@ -45,7 +55,12 @@ namespace TalkToApi.V1.Controllers
                 try
                 {
                     _mensagemRepository.Cadastrar(mensagem);
-                    return Ok(mensagem);
+
+                    var msgDTO = _mapper.Map<Mensagem, MensagemDTO>(mensagem);
+                    msgDTO.Links.Add(new LinkDTO("_self", Url.Link("Cadastrar", null), "POST"));
+                    msgDTO.Links.Add(new LinkDTO("_atualizacaoParcial", Url.Link("AtualizacaoParcial", new { id = mensagem.Id }), "PATCH"));
+
+                    return Ok(msgDTO);
                 }
                 catch(Exception e)
                 {
@@ -61,7 +76,7 @@ namespace TalkToApi.V1.Controllers
         }
 
         [Authorize]
-        [HttpPatch("{id}")]
+        [HttpPatch("{id}", Name = "AtualizacaoParcial")]
         public ActionResult AtualizarParcial(int id, [FromBody]JsonPatchDocument<Mensagem> jsonPatch)
         {
             /*
@@ -77,7 +92,10 @@ namespace TalkToApi.V1.Controllers
             mensagem.Atualizado = DateTime.UtcNow;
             _mensagemRepository.Atualizar(mensagem);
 
-            return Ok(mensagem);
+            var msgDTO = _mapper.Map<Mensagem, MensagemDTO>(mensagem);
+            msgDTO.Links.Add(new LinkDTO("_self", Url.Link("AtualizacaoParcial", new { id = mensagem.Id }), "PATCH"));
+
+            return Ok(msgDTO);
 
         }
     }
