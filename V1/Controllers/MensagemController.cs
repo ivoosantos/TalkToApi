@@ -27,7 +27,7 @@ namespace TalkToApi.V1.Controllers
         }
 
         [Authorize]
-        [HttpGet("{usuarioUmId}/{usuarioDoisId}", Name = "Obter")]
+        [HttpGet("{usuarioUmId}/{usuarioDoisId}", Name = "MensagemObter")]
         public ActionResult ObterMensagens(string usuarioUmId, string usuarioDoisId)
         {
             if(usuarioUmId == usuarioDoisId)
@@ -39,14 +39,14 @@ namespace TalkToApi.V1.Controllers
 
             var listaMsg = _mapper.Map<List<Mensagem>, List<MensagemDTO>>(mensagens);
             var lista = new ListaDTO<MensagemDTO>() { Lista = listaMsg };
-            lista.Links.Add(new LinkDTO("_self", Url.Link("Obter", new { usuarioUmId = usuarioUmId, usuarioDoisId = usuarioDoisId }), "GET"));
+            lista.Links.Add(new LinkDTO("_self", Url.Link("MensagemObter", new { usuarioUmId = usuarioUmId, usuarioDoisId = usuarioDoisId }), "GET"));
 
             return Ok(lista);
 
         }
 
         [Authorize]
-        [HttpPost("", Name = "Cadastrar")]
+        [HttpPost("", Name = "MensagemCadastrar")]
         public ActionResult Cadastrar([FromBody]Mensagem mensagem)
         {
 
@@ -57,8 +57,8 @@ namespace TalkToApi.V1.Controllers
                     _mensagemRepository.Cadastrar(mensagem);
 
                     var msgDTO = _mapper.Map<Mensagem, MensagemDTO>(mensagem);
-                    msgDTO.Links.Add(new LinkDTO("_self", Url.Link("Cadastrar", null), "POST"));
-                    msgDTO.Links.Add(new LinkDTO("_atualizacaoParcial", Url.Link("AtualizacaoParcial", new { id = mensagem.Id }), "PATCH"));
+                    msgDTO.Links.Add(new LinkDTO("_self", Url.Link("MensagemCadastrar", null), "POST"));
+                    msgDTO.Links.Add(new LinkDTO("_mensagemAtualizacaoParcial", Url.Link("MensagemAtualizacaoParcial", new { id = mensagem.Id }), "PATCH"));
 
                     return Ok(msgDTO);
                 }
@@ -76,7 +76,7 @@ namespace TalkToApi.V1.Controllers
         }
 
         [Authorize]
-        [HttpPatch("{id}", Name = "AtualizacaoParcial")]
+        [HttpPatch("{id}", Name = "MensagemAtualizacaoParcial")]
         public ActionResult AtualizarParcial(int id, [FromBody]JsonPatchDocument<Mensagem> jsonPatch)
         {
             /*
@@ -93,7 +93,7 @@ namespace TalkToApi.V1.Controllers
             _mensagemRepository.Atualizar(mensagem);
 
             var msgDTO = _mapper.Map<Mensagem, MensagemDTO>(mensagem);
-            msgDTO.Links.Add(new LinkDTO("_self", Url.Link("AtualizacaoParcial", new { id = mensagem.Id }), "PATCH"));
+            msgDTO.Links.Add(new LinkDTO("_self", Url.Link("MensagemAtualizacaoParcial", new { id = mensagem.Id }), "PATCH"));
 
             return Ok(msgDTO);
 
