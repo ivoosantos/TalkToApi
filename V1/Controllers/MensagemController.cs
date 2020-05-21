@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using TalkToApi.V1.Models;
 using TalkToApi.V1.Repositories.Contracts;
@@ -57,6 +58,27 @@ namespace TalkToApi.V1.Controllers
             }
 
             return Ok();
+        }
+
+        [Authorize]
+        [HttpPatch("{id}")]
+        public ActionResult AtualizarParcial(int id, [FromBody]JsonPatchDocument<Mensagem> jsonPatch)
+        {
+            /*
+             *  JSONPatch - [{ "op": "add|remove|replace", "path": "texto", "value": "Mensagem substituida!" }, { "op": "add|remove|replace", "path": "excluido", "value": true }]
+             */
+
+            if (jsonPatch == null)
+                return BadRequest();
+
+            var mensagem = _mensagemRepository.Obter(id);
+            jsonPatch.ApplyTo(mensagem);
+
+            mensagem.Atualizado = DateTime.UtcNow;
+            _mensagemRepository.Atualizar(mensagem);
+
+            return Ok(mensagem);
+
         }
     }
 }

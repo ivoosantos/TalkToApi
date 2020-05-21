@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TalkToApi.V1.Models.DTO;
 
 namespace MimicAPI.Helpers
 {
@@ -12,7 +13,9 @@ namespace MimicAPI.Helpers
     {
         public DTOMapperProfile()
         {
-            //CreateMap<Palavra, PalavraDTO>();
+            CreateMap<ApplicationUser, UsuarioDTO>().ForMember(dest => dest.Nome, orig => orig.MapFrom(src => src.FullName));
+
+            CreateMap<List<ApplicationUser>, List<UsuarioDTO>>();
             //CreateMap<PaginationList<Palavra>, PaginationList<PalavraDTO>>();
         }
     }
