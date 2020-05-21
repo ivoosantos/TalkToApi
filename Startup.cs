@@ -67,6 +67,11 @@ namespace TalkToApi
                 cfg.ReturnHttpNotAcceptable = true; //Retorna 406 quando o user solicita outro tipo de retorno que não seja o padrão da API
                 cfg.InputFormatters.Add(new XmlSerializerInputFormatter(cfg));
                 cfg.OutputFormatters.Add(new XmlSerializerOutputFormatter());
+                var jsonOutputFormatter = cfg.OutputFormatters.OfType<JsonOutputFormatter>().FirstOrDefault();
+                if(jsonOutputFormatter != null)
+                {
+                    jsonOutputFormatter.SupportedMediaTypes.Add("application/vnd.talkto.hateoas+json");
+                }
             })
                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2).AddJsonOptions(
                 options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
