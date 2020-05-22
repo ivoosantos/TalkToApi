@@ -74,9 +74,19 @@ namespace TalkToApi
                 {
                     //Regra de autorização para fazer requição na api...
                     policy.WithOrigins("https://localhost:44306", "http://localhost:44306")
-                            .WithMethods("GET")
-                            .WithHeaders("Accept", "Authorization");
+                            .AllowAnyMethod()
+                            .SetIsOriginAllowedToAllowWildcardSubdomains() //Habilitar CORS para todos os Subdominios
+                            .AllowAnyHeader();
+                            //.WithMethods("GET")
+                            //.WithHeaders("Accept", "Authorization");
 
+                });
+                //Hbilitar todos os sites, com restrições.
+                cfg.AddPolicy("AnyOrigin", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .WithMethods("GET")
+                          .AllowAnyHeader();
                 });
             });
 
@@ -152,7 +162,17 @@ namespace TalkToApi
 
             });
 
-            services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<TalkToContext>().AddDefaultTokenProviders();//Mostra as telas de erros com uma msg...
+            services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            {
+                //Informaçoes para remover obrigatoriedade de senhas de seguranças (opcional, mas não é recomendado)
+                options.Password.RequireDigit = false;
+                options.Password.RequiredLength = 5;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+            })
+                    .AddEntityFrameworkStores<TalkToContext>()
+                    .AddDefaultTokenProviders();//Mostra as telas de erros com uma msg...
 
             services.AddAuthentication(options =>
             {
@@ -208,7 +228,7 @@ namespace TalkToApi
             app.UseStatusCodePages();
             app.UseAuthentication();
             app.UseHttpsRedirection();
-            app.UseCors();
+            //app.UseCors("AnyOrigin"); // Desabilite quando for usar Atributos EnableCors/DisableCors.
             app.UseMvc();
 
             app.UseSwagger();

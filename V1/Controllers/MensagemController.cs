@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +18,7 @@ namespace TalkToApi.V1.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [ApiVersion("1.0")]
+    [EnableCors] //Default Policy
     public class MensagemController : ControllerBase
     {
         private readonly IMapper _mapper;

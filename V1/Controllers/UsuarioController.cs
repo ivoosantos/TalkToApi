@@ -15,12 +15,14 @@ using TalkToApi.V1.Models.DTO;
 using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using TalkToApi.Helpers.Constants;
+using Microsoft.AspNetCore.Cors;
 
 namespace TalkToApi.V1.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [ApiVersion("1.0")]
+    [EnableCors("AnyOrigin")]
     public class UsuarioController : ControllerBase
     {
         private readonly IMapper _mapper;
@@ -39,6 +41,7 @@ namespace TalkToApi.V1.Controllers
 
         [Authorize]
         [HttpGet("", Name = "UsuarioObterTodos")]
+        [DisableCors]
         public ActionResult ObterTodos([FromHeader(Name = "Accept")]string mediaType)
         {
             var usuarioAppUser = _userManager.Users.ToList();
@@ -58,7 +61,6 @@ namespace TalkToApi.V1.Controllers
             }
             else
             {
-                //TODO - AutoMapper => Converter para Objeto sem HyperLink.
                 var usuarioResult = _mapper.Map<List<ApplicationUser>, List<UsuarioDTOSemHyperlink>>(usuarioAppUser);
                 return Ok(usuarioResult);
             }
@@ -92,10 +94,10 @@ namespace TalkToApi.V1.Controllers
         {
             if (ModelState.IsValid)
             {
-                ApplicationUser usuario = new ApplicationUser();
-                usuario.FullName = usuarioDTO.Nome;
-                usuario.UserName = usuarioDTO.Email;
-                usuario.Email = usuarioDTO.Email;
+                ApplicationUser usuario = _mapper.Map<UsuarioDTO, ApplicationUser>(usuarioDTO);//Código que substitui os comando nas linhas a baixos com o AutoMapper
+                //usuario.FullName = usuarioDTO.Nome;
+                //usuario.UserName = usuarioDTO.Email;
+                //usuario.Email = usuarioDTO.Email;
 
                 var resultado = _userManager.CreateAsync(usuario, usuarioDTO.Senha).Result;
 
@@ -140,7 +142,6 @@ namespace TalkToApi.V1.Controllers
         [HttpPut("{id}", Name = "UsuarioAtualizar")]
         public ActionResult Atualizar(string id, [FromBody]UsuarioDTO usuarioDTO, [FromHeader(Name = "Accept")]string mediaType)
         {
-            //TODO - Adicionar filtro de validação
             ApplicationUser usuario = _userManager.GetUserAsync(HttpContext.User).Result;
             if (usuario.Id != id)
             {
@@ -149,13 +150,11 @@ namespace TalkToApi.V1.Controllers
 
             if (ModelState.IsValid)
             {
-                //TODO - Refatorar para AutoMapper.
                 usuario.FullName = usuarioDTO.Nome;
                 usuario.UserName = usuarioDTO.Email;
                 usuario.Email = usuarioDTO.Email;
                 usuario.Slogan = usuarioDTO.Slogan;
 
-                //TODO - Remover no Identity critérios da senha
                 var resultado = _userManager.UpdateAsync(usuario).Result;
                 _userManager.RemovePasswordAsync(usuario);
                 _userManager.AddPasswordAsync(usuario, usuarioDTO.Senha);
