@@ -64,6 +64,22 @@ namespace TalkToApi
                 cfg.UseSqlite("Data Source=Database\\TalkTo.db");
             });
 
+            /*
+             * Origin: Domínio(Sub): api.site.com.br != www.site.com.br != web.site.com.br != www.empresa.com.br
+             * Domínio(Protocolo, Porta): http://www.site.com.br != https://www.site.com.br
+             * Domínio(Protocolo, Porta): http://www.site.com.br:80 != http://www.site.com.br:367
+             */
+            services.AddCors(cfg=> {
+                cfg.AddDefaultPolicy(policy =>
+                {
+                    //Regra de autorização para fazer requição na api...
+                    policy.WithOrigins("https://localhost:44306", "http://localhost:44306")
+                            .WithMethods("GET")
+                            .WithHeaders("Accept", "Authorization");
+
+                });
+            });
+
             services.AddMvc(cfg => {
                 cfg.ReturnHttpNotAcceptable = true; //Retorna 406 quando o user solicita outro tipo de retorno que não seja o padrão da API
                 cfg.InputFormatters.Add(new XmlSerializerInputFormatter(cfg));
@@ -192,6 +208,7 @@ namespace TalkToApi
             app.UseStatusCodePages();
             app.UseAuthentication();
             app.UseHttpsRedirection();
+            app.UseCors();
             app.UseMvc();
 
             app.UseSwagger();
